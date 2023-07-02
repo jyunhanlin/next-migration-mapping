@@ -1,0 +1,26 @@
+{
+  "name": "next-migration-mapping",
+  "version": "1.0.0",
+  "description": "Map your own implementation when applying incremental migration",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "LICENSE",
+    "migration-mapping.js",
+    "package.json",
+    "README.md"
+  ],
+  "scripts": {
+    "semantic-release": "semantic-release",
+    "prepare": "husky install"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@commitlint/cli": "^17.6.6",
+    "@commitlint/config-conventional": "^17.6.6",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "husky": "^8.0.3",
+    "semantic-release": "^21.0.6"
+  }
+}
