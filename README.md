@@ -9,8 +9,9 @@ But it does not allow us to map our own legacy implementation to another new imp
 
 ## When
 
-When applying incremental migration, we want to reuse the code.
-We can implement some component or some library with Next.js API, so the legacy code can reuse on both legacy codebase and the Next.js codebase.
+When applying incremental migration, and we want to reuse the code.
+We can implement some component or some library with Next.js API,
+so the legacy code can reuse on both legacy codebase and the Next.js codebase.
 
 ## How
 
