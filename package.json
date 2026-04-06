@@ -11,6 +11,7 @@
     "README.md"
   ],
   "scripts": {
+    "test": "node --test test/*.test.js",
     "semantic-release": "semantic-release",
     "prepare": "husky install"
   },
@@ -20,6 +21,7 @@
     "@commitlint/config-conventional": "^18.6.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
+    "enhanced-resolve": "^5.20.1",
     "husky": "^9.0.10",
     "semantic-release": "^23.0.2"
   }
