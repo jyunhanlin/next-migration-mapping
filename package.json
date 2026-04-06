@@ -3,8 +3,10 @@
   "version": "1.0.0-rc.1",
   "description": "Map your own implementation when applying incremental migration",
   "main": "index.js",
+  "types": "index.d.ts",
   "files": [
     "index.js",
+    "index.d.ts",
     "LICENSE",
     "migration-mapping.js",
     "package.json",
