@@ -123,55 +123,67 @@ function validateMappings(mappings) {
   }
 }
 
+const PREFIX = '[next-migration-mapping]';
+
 class MigrationMappingPlugin {
-  constructor({ paths }) {
-    this.paths = paths;
+  constructor({ paths, debug = false }) {
+    this.classified = classifyMappings(paths);
+    this.debug = debug;
+
+    if (debug) {
+      console.log(`${PREFIX} registered mappings:`);
+      for (const [key, value] of Object.entries(paths)) {
+        const type = key.includes('*') ? 'wildcard' : 'exact/suffix';
+        console.log(`${PREFIX}   ${key} → ${value} (${type})`);
+      }
+    }
   }
+
   apply(resolver) {
     const target = resolver.ensureHook('resolve');
+    const classified = this.classified;
+    const debug = this.debug;
+
     resolver
       .getHook('described-resolve')
       .tapAsync('MigrationMappingPlugin', (request, resolveContext, callback) => {
-        const paths = this.paths;
-        const pathsKeys = Object.keys(paths);
-
-        // If no aliases are added bail out
-        if (pathsKeys.length === 0) {
-          return callback();
-        }
-
         const moduleName = request.request;
 
-        // If the module name does not match any of the patterns in `paths` we hand off resolving to webpack
-        const matchedPattern = matchPatternOrExact(pathsKeys, moduleName);
+        const match = matchMapping(moduleName, classified);
 
-        if (!matchedPattern) {
+        if (!match) {
           return callback();
         }
 
-        if (!paths[matchedPattern]) return callback();
-
-        const curPath = paths[matchedPattern];
-        // Ensure .d.ts is not matched
-        if (curPath.endsWith('.d.ts')) {
-          // try next path candidate
+        // Skip .d.ts targets
+        if (match.target.endsWith('.d.ts')) {
           return callback();
         }
-        const candidate = curPath;
-        const obj = Object.assign({}, request, {
-          request: candidate,
-        });
+
+        if (debug) {
+          console.log(
+            `${PREFIX} mapping: ${moduleName} → ${match.target} (via ${match.pattern})`
+          );
+        }
+
+        const obj = { ...request, request: match.target };
 
         resolver.doResolve(
           target,
           obj,
-          `Aliased for migration: ${matchedPattern} to ${candidate}`,
+          `Aliased for migration: ${match.pattern} to ${match.target}`,
           resolveContext,
           (resolverErr, resolverResult) => {
             if (resolverErr || resolverResult === undefined) {
+              console.warn(
+                `${PREFIX} warning: failed to resolve "${match.target}" for mapping "${match.pattern}"`
+              );
+              if (debug && resolverErr) {
+                console.warn(`${PREFIX}   reason: ${resolverErr.message}`);
+              }
               return callback();
             }
-            return callback(resolverErr, resolverResult);
+            return callback(null, resolverResult);
           }
         );
       });
