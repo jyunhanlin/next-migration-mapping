@@ -6,15 +6,72 @@
  * refer to: https://github.com/vercel/next.js/blob/canary/packages/next/build/webpack/plugins/jsconfig-paths-plugin.ts
  */
 
-function matchPatternOrExact(patternStrings, candidate) {
-  for (const patternString of patternStrings) {
-    if (patternString === candidate) {
-      // pattern was matched as is - no need to search further
-      return patternString;
-    } else if (candidate.endsWith(patternString)) {
-      return patternString;
+/**
+ * Classify mapping keys into buckets for the matching strategy chain.
+ * Non-wildcard keys go to `nonWildcard` (used for both exact and suffix match).
+ * Wildcard keys (containing *) go to `wildcard` with parsed prefix/suffix.
+ */
+function classifyMappings(paths) {
+  const nonWildcard = {};
+  const wildcard = [];
+
+  for (const [key, value] of Object.entries(paths)) {
+    if (key.includes('*')) {
+      const starIndex = key.indexOf('*');
+      wildcard.push({
+        key,
+        prefix: key.slice(0, starIndex),
+        suffix: key.slice(starIndex + 1),
+        target: value,
+      });
+    } else {
+      nonWildcard[key] = value;
     }
   }
+
+  return { nonWildcard, wildcard };
+}
+
+/**
+ * Match a module name against classified mappings.
+ * Priority: exact match → wildcard match → suffix match.
+ * Returns { pattern, target } or null.
+ */
+function matchMapping(moduleName, classified) {
+  // 1. Exact match
+  if (classified.nonWildcard[moduleName] !== undefined) {
+    return { pattern: moduleName, target: classified.nonWildcard[moduleName] };
+  }
+
+  // 2. Wildcard match
+  for (const wc of classified.wildcard) {
+    if (
+      moduleName.startsWith(wc.prefix) &&
+      moduleName.endsWith(wc.suffix) &&
+      moduleName.length >= wc.prefix.length + wc.suffix.length
+    ) {
+      const endIndex = wc.suffix.length > 0
+        ? moduleName.length - wc.suffix.length
+        : moduleName.length;
+      const captured = moduleName.slice(wc.prefix.length, endIndex);
+      const starIndex = wc.target.indexOf('*');
+      const target =
+        wc.target.slice(0, starIndex) + captured + wc.target.slice(starIndex + 1);
+      return { pattern: wc.key, target };
+    }
+  }
+
+  // 3. Suffix match (with / boundary check)
+  for (const [key, value] of Object.entries(classified.nonWildcard)) {
+    if (moduleName.endsWith(key) && moduleName.length > key.length) {
+      const matchStart = moduleName.length - key.length;
+      if (moduleName[matchStart - 1] === '/') {
+        return { pattern: key, target: value };
+      }
+    }
+  }
+
+  return null;
 }
 
 class MigrationMappingPlugin {
@@ -74,4 +131,6 @@ class MigrationMappingPlugin {
 
 module.exports = {
   MigrationMappingPlugin,
+  classifyMappings,
+  matchMapping,
 };
