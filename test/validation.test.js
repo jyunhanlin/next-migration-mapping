@@ -45,6 +45,12 @@ describe('validateMappings', () => {
     });
   });
 
+  it('throws for multiple wildcards in value', () => {
+    assert.throws(() => validateMappings({ 'a/*': '/path/*/*' }), {
+      message: /only one \* is allowed/,
+    });
+  });
+
   it('throws when key has wildcard but value does not', () => {
     assert.throws(() => validateMappings({ 'a/*': '/path/fixed' }), {
       message: /key .* has a wildcard but value .* does not/,

@@ -104,9 +104,14 @@ function validateMappings(mappings) {
         `[next-migration-mapping] mapping key "${key}" contains ${keyStars} wildcards, only one * is allowed`
       );
     }
-    if (keyStars === 1 && valueStars !== 1) {
+    if (keyStars === 1 && valueStars === 0) {
       throw new Error(
         `[next-migration-mapping] mapping key "${key}" has a wildcard but value "${value}" does not`
+      );
+    }
+    if (keyStars === 1 && valueStars > 1) {
+      throw new Error(
+        `[next-migration-mapping] mapping value "${value}" for key "${key}" contains ${valueStars} wildcards, only one * is allowed`
       );
     }
     if (keyStars === 0 && valueStars > 0) {
