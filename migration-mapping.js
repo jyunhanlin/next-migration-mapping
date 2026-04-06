@@ -6,6 +6,9 @@
  * refer to: https://github.com/vercel/next.js/blob/canary/packages/next/build/webpack/plugins/jsconfig-paths-plugin.ts
  */
 
+const fs = require('fs');
+const path = require('path');
+
 /**
  * Classify mapping keys into buckets for the matching strategy chain.
  * Non-wildcard keys go to `nonWildcard` (used for both exact and suffix match).
@@ -74,6 +77,52 @@ function matchMapping(moduleName, classified) {
   return null;
 }
 
+/**
+ * Validate mapping entries at initialization time.
+ * Throws for invalid configuration, warns for suspicious but non-fatal issues.
+ */
+function validateMappings(mappings) {
+  if (typeof mappings !== 'object' || mappings === null || Array.isArray(mappings)) {
+    throw new Error('[next-migration-mapping] mappings must be a plain object');
+  }
+
+  for (const [key, value] of Object.entries(mappings)) {
+    if (key === '') {
+      throw new Error('[next-migration-mapping] mapping key must not be empty');
+    }
+    if (typeof value !== 'string') {
+      throw new Error(
+        `[next-migration-mapping] mapping value for "${key}" must be a string, got ${typeof value}`
+      );
+    }
+
+    const keyStars = (key.match(/\*/g) || []).length;
+    const valueStars = (value.match(/\*/g) || []).length;
+
+    if (keyStars > 1) {
+      throw new Error(
+        `[next-migration-mapping] mapping key "${key}" contains ${keyStars} wildcards, only one * is allowed`
+      );
+    }
+    if (keyStars === 1 && valueStars !== 1) {
+      throw new Error(
+        `[next-migration-mapping] mapping key "${key}" has a wildcard but value "${value}" does not`
+      );
+    }
+    if (keyStars === 0 && valueStars > 0) {
+      throw new Error(
+        `[next-migration-mapping] mapping value "${value}" has a wildcard but key "${key}" does not`
+      );
+    }
+
+    if (keyStars === 0 && path.isAbsolute(value) && !fs.existsSync(value)) {
+      console.warn(
+        `[next-migration-mapping] warning: target "${value}" for "${key}" does not exist`
+      );
+    }
+  }
+}
+
 class MigrationMappingPlugin {
   constructor({ paths }) {
     this.paths = paths;
@@ -133,4 +182,5 @@ module.exports = {
   MigrationMappingPlugin,
   classifyMappings,
   matchMapping,
+  validateMappings,
 };
