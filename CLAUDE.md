@@ -31,11 +31,12 @@ Commits must follow [Conventional Commits](https://www.conventionalcommits.org/)
 
 ### Release process
 
-Fully automated via semantic-release on CI (GitHub Actions):
-- Push to `main` → production npm release
-- Push to `rc` → pre-release with rc tag
-- Version, changelog, npm publish, and GitHub release are all handled automatically
-- No manual version bumps or publish commands needed
+Tag-based release via GitHub Actions:
+- `npm version <version>` to bump package.json and create git tag
+- `git push && git push --tags` to trigger the pipeline
+- Tags with `-` (e.g., `v1.0.0-rc.2`) publish with `rc` dist-tag
+- Tags without `-` (e.g., `v1.0.0`) publish as `latest`
+- npm publishing uses OIDC trusted publishing (no NPM_TOKEN needed)
 
 ### Testing
 
