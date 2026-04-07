@@ -13,7 +13,7 @@ Current version: 1.0.0-rc.1 (pre-release on `rc` branch).
 Two-file design with no production dependencies:
 
 - **index.js** — Next.js config wrapper using the curried `withX(options)(nextConfig)` plugin pattern. Injects `MigrationMappingPlugin` into webpack's resolver plugins.
-- **migration-mapping.js** — Webpack resolver plugin (`MigrationMappingPlugin`) that hooks into `described-resolve` to intercept and redirect module resolution. Based on TypeScript/Next.js `jsconfig-paths-plugin`. Matches import paths by exact match or suffix, skips `.d.ts` files, and delegates unmatched requests back to webpack's resolver chain.
+- **migration-mapping.js** — Webpack resolver plugin (`MigrationMappingPlugin`) that hooks into `described-resolve` to intercept and redirect module resolution. Based on TypeScript/Next.js `jsconfig-paths-plugin`. Matches import paths by exact match, wildcard pattern (`*`), or suffix, with explicit priority order. Skips `.d.ts` files, and delegates unmatched requests back to webpack's resolver chain.
 
 ## Development
 
@@ -37,6 +37,10 @@ Fully automated via semantic-release on CI (GitHub Actions):
 - Version, changelog, npm publish, and GitHub release are all handled automatically
 - No manual version bumps or publish commands needed
 
-### No test suite
+### Testing
 
-There are currently no tests. The package has no test framework configured.
+Tests use Node.js built-in test runner (`node:test` + `node:assert`). Integration tests use `enhanced-resolve` (devDependency) for real webpack resolver pipeline testing.
+
+```sh
+npm test
+```

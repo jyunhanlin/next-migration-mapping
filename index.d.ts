@@ -18,4 +18,4 @@ declare function withMigrationMapping(
   options?: MigrationMappingInput
 ): (nextConfig?: NextConfig) => NextConfig;
 
-export default withMigrationMapping;
+export = withMigrationMapping;
